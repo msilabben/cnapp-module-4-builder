@@ -14,27 +14,6 @@ container:
     password: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-## Security model
-
-This repo intentionally keeps the model simple:
-
-- wrapper images only
-- upstream images are pinned by digest in Dockerfiles
-- the upstream version is read from the same `FROM` line as the pinned digest
-- images are built with `docker/build-push-action`
-- workflows discover images from directories below `images/`
-- pull requests build smoke-test targets and final image targets
-- pushes to `main` publish images to GHCR after the `production` environment gate is approved
-- images are signed with Cosign after publishing
-- SBOMs are generated for published images and attached as signed Cosign attestations
-- publish jobs write a GitHub job summary containing the published digest and SBOM attestation status
-- no image scanning in this repository
-- no policy evaluation in this repository
-- no automatic downstream updates
-- downstream repos pin published image digests
-
-Tags are used for readability. Digests are used for security.
-
 ## Repository layout
 
 ```text
@@ -58,24 +37,6 @@ Tags are used for readability. Digests are used for security.
     └── discover-images.py
 ```
 
-## Initial setup checklist
-
-Before enabling the workflows, replace all placeholders:
-
-```bash
-grep -R "REPLACE_WITH_" .
-```
-
-Required replacements:
-
-1. Replace `msilabben` with the GitHub organization or user that owns the GHCR namespace.
-2. Replace `REPLACE_WITH_REPO` with this repository name.
-3. Replace every upstream image digest in each Dockerfile.
-4. Replace every `REPLACE_WITH_FULL_COMMIT_SHA` in `.github/workflows` and `docs/downstream-example.yml` with a full action commit SHA. This includes the SBOM action and Cosign installer.
-5. Create a GitHub Environment named `production` and configure required reviewers.
-6. Configure branch protection or a repository ruleset for `main`.
-7. Keep the publish workflow path filter scoped to image-builder files unless you intentionally want non-image changes to publish images.
-
 ## Tool versions
 
 Each tool version is defined once, in the first Dockerfile stage:
@@ -93,13 +54,13 @@ ghcr.io/msilabben/<directory-name>:<version>
 For example, this Dockerfile line:
 
 ```dockerfile
-FROM semgrep/semgrep:1.160.0@sha256:REPLACE_WITH_UPSTREAM_DIGEST AS image
+FROM semgrep/semgrep:1.165.0@sha256:REPLACE_WITH_UPSTREAM_DIGEST AS image
 ```
 
 publishes:
 
 ```text
-ghcr.io/msilabben/semgrep:1.160.0
+ghcr.io/msilabben/semgrep:1.165.0
 ```
 
 A version bump should only require changing the `FROM` line in the relevant Dockerfile.
@@ -125,9 +86,9 @@ The script is intentionally small and limited to discovery. It does not build, p
 Example commands:
 
 ```bash
-docker buildx imagetools inspect semgrep/semgrep:1.160.0
-docker buildx imagetools inspect aquasec/trivy:0.70.0
-docker buildx imagetools inspect openpolicyagent/conftest:v0.59.0
+docker buildx imagetools inspect semgrep/semgrep:1.165.0
+docker buildx imagetools inspect aquasec/trivy:0.71.1
+docker buildx imagetools inspect openpolicyagent/conftest:v0.68.2
 ```
 
 Use the digest for the platform or manifest you intentionally want to depend on. For the current baseline, this repo assumes a simple `linux/amd64` GitHub-hosted runner setup and does not attempt multi-arch publishing.
