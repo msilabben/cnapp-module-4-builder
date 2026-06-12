@@ -1,6 +1,6 @@
 # Wrapper image for Conftest.
 # Keep this as close to upstream as possible: do not change ENTRYPOINT/CMD unless required.
-FROM openpolicyagent/conftest:v0.68.2@sha256:b451f93ec386c25a4ed5aa4b835605dd4aee693374b619f5dc92374afcb6c296 AS image
+FROM openpolicyagent/conftest:v0.68.2@sha256:5fd81e332d7e4bc01daf3ef35371800a9a9720a30c0c37a78de0c5fbe4b6d622 AS image
 
 LABEL org.opencontainers.image.title="conftest-wrapper" \
       org.opencontainers.image.description="Wrapper image around upstream openpolicyagent/conftest for GitHub CI/CD" \
