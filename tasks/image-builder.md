@@ -35,7 +35,7 @@ Si ifra til fasilitator hvis dere møter på problemer.
 ```bash
 gh auth token | docker login ghcr.io --username $(gh api user -q ".login") --password-stdin
 ```
-3. Retrieve and verify the SBoM
+3. Hent ned og verifiser SBoM
 ```bash
 cosign verify-attestation \
   --certificate-identity "https://github.com/msilabben/<your repository name>/.github/workflows/push-main.yml@refs/heads/main" \
@@ -43,41 +43,29 @@ cosign verify-attestation \
   --type spdxjson \
   --output json ghcr.io/msilabben/cnapp-module-4-builder/trivy:0.71.1 2>/dev/null | jq > result.json
 ```
-4. Take a minute to reflect. What are we seeing in result.json?
-5. Decode the payload and inspect the contents
+4. Ta et minutt til å reflektere: hva er det vi ser i result.json?
+5. Dekod payload og inspiser innholdet
 ```bash
 jq -r '.payload' result.json | base64 -d > payload.json
 ```
-6. What does the 'subject' and 'predicate' tell us in payload.json?
+6. Hva er det 'subject' og 'predicate' forteller oss i payload.json?
 
 ### Oppdate M2 pipelines med ny kilde
-1. Gå til msilabben og fork repoet som heter: cnapp-module-2-application
+1. Gå til msilabben og fork repoet som heter: cnapp-module-2-application ("Copy the main branch only" skal være avslått)
 2. Velg msilabben som miljø. 
 3. Gå til "actions" og godta at workflows får lov til å kjøre. 
-4. Åpne et workspace i dette repoet. Det gjøres fra hovedsiden til repoet: code -> create workspace. 
-5. Lag en ny branch, og checkout inn i den nye branchen. 
-6. Gå til filen ".github/workflows/pull-request.yml". 
-7. Oppdater semgrep og trivy jobbene til å bruke det nye imaget. Bytt kilden til imaget. 
-8. Gi workflowen tilgang til å lese fra packages ved å legge til "packages: read" under "premissions". 
-9. Aktiver workflowene ved å sette "if: false" til "if: true" på både semgrep og trivy. 
-9. Legg til filene, commit og push til repoet. 
-10. Opprett en PR inn til (din) main, og se om workflowen kjører vellykket. 
-
-### Oppdatere M2 pipelines med å knytte til sha
-1. Gå tilbake til workspace, og til ".github/workflows/pull-request.yml". 
-2. For imaget til semgrep, knytt imaget til sha istedenfor versjonsnummer. 
-3. For imaget til trivy, knytt imaget til sha istedenfor versjonsnummer. 
-4. Add, commit og push til repoet. 
-5. Gå til den eksisterende PR'en (eller lag en ny) og se om workflowen kjører som den skal. 
-
-### Sett begrensninger på npm og uv
-1. Gå til workspacet for M2. 
-2. Oppdater uv i backend til å ikke tillate pakker som er nyere enn 7 dager. (Oppdater backend/pyproject.toml under "[tool.uv]")
-3. Oppdater npm i frontend til å ikke tillate pakker som er nyere enn 7 dager. (Legg til en ny fil ".npmrc", og en config linje i den filen)
-4. Legg til, commit og push filene til repoet. 
+4. Gi M2 tilgang til de bygde pakkene ved å gå til 'msilabben > packages > <din pakke> > package settings > add repository > velg din M2'
+5. Åpne et codespace på branch "use-own-images", ved å gå til https://github.com/msilabben/<ditt M2 repo>/tree/fix/use-own-images > "Code" > "create workspace on fix/use-own-images"
+6. Åpne filen `.github/workflows/pull-request.yml` og rediger følgende til å passe ditt repo og dine publiserte pakker:
+- COSIGN_CERTIFICATE_IDENTITY
+- SEMGREP_IMAGE
+- TRIVY_IMAGE
+- CONFTEST_IMAGE
+7. Commit endringene og push
+8. Åpne en PR og verifiser at denne blir grønn
 
 ### Lag OPA policy 
-1. Gå til workspacet for M2.
-2. Gå til ".github/workflows/pull-request.yml" og se på opa-jobben. 
+1. Gå til codespace for M2.
+2. Gå til ".github/workflows/pull-request.yml" og lokaliser opa-jobben. 
 3. Gå til "policy/semgrep.rego" og se på semgrep regelen. 
 4. Med inspirasjon fra semgrep, prøv å lag en OPA-regel som kun tillater images fra msilabben sin ghcr, med pull-request workflowen som inputet. (Lag en ny .rego fil, oppdater pull-request.yml med regelen, og sett inputet til å være .github/workflow/pull-request.yml)
